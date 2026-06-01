@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Tic Tac Toe</title>
+    <!-- Importing Outfit font from Google Fonts for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS reset and variable definitions for harmonious theme */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a, #1e293b);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --cell-bg: rgba(255, 255, 255, 0.03);
+            --cell-hover: rgba(255, 255, 255, 0.08);
+            
+            --color-x: #38bdf8; /* Modern neon cyan */
+            --color-o: #f43f5e; /* Modern neon pink */
+            --color-text: #f8fafc;
+            --color-subtext: #94a3b8;
+            
+            --glow-x: 0 0 15px rgba(56, 189, 248, 0.4);
+            --glow-o: 0 0 15px rgba(244, 63, 94, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--color-text);
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphic Container */
+        .game-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        header {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--color-subtext);
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        /* Turn Indicator Styling */
+        .status-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .turn-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .turn-badge.x {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--color-x);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .turn-badge.o {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--color-o);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        /* 3x3 Board Grid */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* Board Square/Cell Button */
+        .cell {
+            background: var(--cell-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            font-size: 2.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        /* Hover states for interactive cells */
+        .cell:not(.x):not(.o):hover {
+            background: var(--cell-hover);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell:active:not(.x):not(.o) {
+            transform: translateY(1px);
+        }
+
+        /* Pop animation when a cell is marked */
+        .cell.x {
+            color: var(--color-x);
+            text-shadow: var(--glow-x);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: not-allowed;
+        }
+
+        .cell.o {
+            color: var(--color-o);
+            text-shadow: var(--glow-o);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: not-allowed;
+        }
+
+        /* Class added to highlight the winning cells */
+        .cell.winner-cell {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.05);
+            border-width: 2px;
+            animation: pulseWinner 1.5s infinite alternate;
+        }
+
+        .cell.winner-cell.x {
+            border-color: var(--color-x);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .cell.winner-cell.o {
+            border-color: var(--color-o);
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+        }
+
+        /* Restart Button */
+        .restart-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+            background: linear-gradient(135deg, #818cf8, #6366f1);
+        }
+
+        .restart-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .restart-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transition: transform 0.5s ease;
+        }
+
+        .restart-btn:hover svg {
+            transform: rotate(-180deg);
+        }
+
+        /* Disabled board class */
+        .board.disabled .cell:not(.x):not(.o) {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            70% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseWinner {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .game-container {
+                padding: 24px 20px;
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .cell {
+                font-size: 2.2rem;
+                border-radius: 12px;
+            }
+
+            .status-panel {
+                font-size: 1rem;
+                padding: 10px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="game-container" id="gameContainer">
+        <header>
+            <h1>Tic Tac Toe</h1>
+            <p class="subtitle">A battle of wits &bull; Two Players</p>
+        </header>
+
+        <!-- Turn indicator and Winner info -->
+        <section class="status-panel" id="statusPanel" aria-live="polite">
+            <!-- Starting state displays player X turn -->
+            <span id="statusPrefix">Player</span>
+            <span class="turn-badge x" id="turnBadge">X</span>
+            <span id="statusSuffix">'s Turn</span>
+        </section>
+
+        <!-- The 3x3 game board -->
+        <section class="board" id="board" aria-label="Tic Tac Toe Board">
+            <!-- 9 individual squares/buttons -->
+            <button class="cell" data-index="0" aria-label="Square 1, empty"></button>
+            <button class="cell" data-index="1" aria-label="Square 2, empty"></button>
+            <button class="cell" data-index="2" aria-label="Square 3, empty"></button>
+            
+            <button class="cell" data-index="3" aria-label="Square 4, empty"></button>
+            <button class="cell" data-index="4" aria-label="Square 5, empty"></button>
+            <button class="cell" data-index="5" aria-label="Square 6, empty"></button>
+            
+            <button class="cell" data-index="6" aria-label="Square 7, empty"></button>
+            <button class="cell" data-index="7" aria-label="Square 8, empty"></button>
+            <button class="cell" data-index="8" aria-label="Square 9, empty"></button>
+        </section>
+
+        <!-- Action controls -->
+        <button class="restart-btn" id="restartBtn">
+            <!-- Simple SVG Refresh icon -->
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            <span>Restart Game</span>
+        </button>
+    </main>
+
+    <script>
+        /**
+         * GAME STATE CONFIGURATION
+         */
+        // Simple arrays and primitives represent current game board
+        let boardState = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X";
+        let gameActive = true;
+
+        // The 8 possible winning combinations (rows, columns, diagonals) based on indices
+        const winningCombinations = [
+            [0, 1, 2], // Top row
+            [3, 4, 5], // Middle row
+            [6, 7, 8], // Bottom row
+            [0, 3, 6], // Left column
+            [1, 4, 7], // Middle column
+            [2, 5, 8], // Right column
+            [0, 4, 8], // Diagonal top-left to bottom-right
+            [2, 4, 6]  // Diagonal top-right to bottom-left
+        ];
+
+        // Retrieve DOM elements for manipulation
+        const boardElement = document.getElementById("board");
+        const cells = document.querySelectorAll(".cell");
+        const statusPrefix = document.getElementById("statusPrefix");
+        const turnBadge = document.getElementById("turnBadge");
+        const statusSuffix = document.getElementById("statusSuffix");
+        const restartBtn = document.getElementById("restartBtn");
+
+        /**
+         * FUNCTION: handleCellClick
+         * Triggered when a cell is clicked. Validates interaction, updates states, and transitions turns.
+         */
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            // Extract index from 'data-index' attribute (0 to 8)
+            const clickedCellIndex = parseInt(clickedCell.getAttribute("data-index"));
+
+            // Safety guard: do not process click if space is already taken or game has ended
+            if (boardState[clickedCellIndex] !== "" || !gameActive) {
+                return;
+            }
+
+            // Update board state with current player
+            boardState[clickedCellIndex] = currentPlayer;
+            
+            // Render the player's mark onto the board visually
+            clickedCell.innerText = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase());
+            clickedCell.setAttribute("aria-label", `Square ${clickedCellIndex + 1}, player ${currentPlayer}`);
+
+            // Perform safety validation to check if this move won the match or resulted in a tie
+            checkWinOrDraw();
+        }
+
+        /**
+         * FUNCTION: checkWinOrDraw
+         * Loops through winningCombinations to see if there is a 3-in-a-row pattern, otherwise checks if grid is full.
+         */
+        function checkWinOrDraw() {
+            let roundWon = false;
+            let winningLine = [];
+
+            // Iterate and evaluate each combination against current boardState
+            for (let i = 0; i < winningCombinations.length; i++) {
+                const winCondition = winningCombinations[i];
+                const a = boardState[winCondition[0]];
+                const b = boardState[winCondition[1]];
+                const c = boardState[winCondition[2]];
+
+                // If any position in this line is empty, it can't be a win combination
+                if (a === "" || b === "" || c === "") {
+                    continue;
+                }
+
+                // If all three match, a player has won!
+                if (a === b && b === c) {
+                    roundWon = true;
+                    winningLine = winCondition;
+                    break;
+                }
+            }
+
+            // Scenario A: Player has won
+            if (roundWon) {
+                gameActive = false;
+                
+                // Visually lock board
+                boardElement.classList.add("disabled");
+                
+                // Highlight the specific winning line with pulse animations
+                winningLine.forEach(index => {
+                    cells[index].classList.add("winner-cell");
+                });
+
+                // Display win message with correct player theme styling
+                statusPrefix.innerText = "Player";
+                turnBadge.innerText = currentPlayer;
+                turnBadge.className = `turn-badge ${currentPlayer.toLowerCase()}`;
+                statusSuffix.innerText = "Wins! 🎉";
+                return;
+            }
+
+            // Scenario B: Game is a draw (no empty cells remaining and no winner detected)
+            const isDraw = !boardState.includes("");
+            if (isDraw) {
+                gameActive = false;
+                boardElement.classList.add("disabled");
+
+                // Display draw status
+                statusPrefix.innerText = "It's a Draw! 🤝";
+                turnBadge.style.display = "none";
+                statusSuffix.innerText = "";
+                return;
+            }
+
+            // Scenario C: Match continues, change turn to the next player
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            
+            // Dynamically update turn status badge content and style classes
+            turnBadge.innerText = currentPlayer;
+            turnBadge.className = `turn-badge ${currentPlayer.toLowerCase()}`;
+        }
+
+        /**
+         * FUNCTION: restartGame
+         * Wipes board status clean, resets current player, and updates layout configurations.
+         */
+        function restartGame() {
+            // Restore default game configuration state
+            boardState = ["", "", "", "", "", "", "", "", ""];
+            currentPlayer = "X";
+            gameActive = true;
+
+            // Re-enable board grid
+            boardElement.classList.remove("disabled");
+
+            // Clean status panel and restore Player X Turn notification
+            statusPrefix.innerText = "Player";
+            turnBadge.style.display = "inline-flex";
+            turnBadge.innerText = "X";
+            turnBadge.className = "turn-badge x";
+            statusSuffix.innerText = "'s Turn";
+
+            // Wipes clear all markings, winner classes, and attributes on cells
+            cells.forEach((cell, index) => {
+                cell.innerText = "";
+                cell.className = "cell"; // Removes all classes including x, o, and winner-cell
+                cell.setAttribute("aria-label", `Square ${index + 1}, empty`);
+            });
+        }
+
+        /**
+         * EVENT LISTENERS
+         */
+        // Listen for board interactions
+        cells.forEach(cell => cell.addEventListener("click", handleCellClick));
+        // Listen for game restarts
+        restartBtn.addEventListener("click", restartGame);
+    </script>
+</body>
+</html>
